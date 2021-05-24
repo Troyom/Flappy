@@ -20,13 +20,15 @@ public class Jogo extends ApplicationAdapter {
 	private Texture fundo;
 	private Texture canoTopo;
 	private Texture canoBaixo;
+	private  Texture gameOver;
+
 	private float larguraDispositivo;
 	private float alturaDispositivo;
 
 
 	private int gravidade = 0;
 	private int pontos=0;
-
+    private int estadoJogo=0;
 	private float variacao = 0;
 	private float posicaoInicialVerticalPassaro = 0;
 	private float posicaoCanoHorizontal;
@@ -34,6 +36,9 @@ public class Jogo extends ApplicationAdapter {
 	private float espaçoEntreCano;
 
 	BitmapFont textoPontuacao;
+    BitmapFont textoReiniciar;
+    BitmapFont textoMelhorPountuacao;
+
 	private  boolean passouCano=false;
 	private Random random;
 
@@ -75,6 +80,14 @@ public class Jogo extends ApplicationAdapter {
 		textoPontuacao.setColor(Color.WHITE);
 		textoPontuacao.getData().setScale(10);
 
+        textoReiniciar=new BitmapFont();
+        textoReiniciar.setColor(Color.GREEN);
+        textoReiniciar.getData().setScale(3);
+
+        textoMelhorPountuacao=new BitmapFont();
+        textoMelhorPountuacao.setColor(Color.RED);
+        textoMelhorPountuacao.getData().setScale(3);
+
 		shapeRenderer=new ShapeRenderer();
 		circuloPassaro=new Circle();
 		retanguloCanoCima=new Rectangle();
@@ -101,6 +114,8 @@ public class Jogo extends ApplicationAdapter {
 		canoBaixo = new Texture("cano baixo maior.png");
 
 		canoTopo = new Texture("cano topo maior.png");
+
+		gameOver=new Texture("game_over.png");
 
 	}
 
@@ -145,6 +160,9 @@ public class Jogo extends ApplicationAdapter {
                 passouCano=true;
             }
         }
+        variacao+=Gdx.graphics.getDeltaTime()*10;
+        if(variacao>3)
+            variacao=0;
 
     }
 
@@ -159,37 +177,53 @@ public class Jogo extends ApplicationAdapter {
 		batch.draw(canoTopo, posicaoCanoHorizontal, alturaDispositivo/2+espaçoEntreCano/2+posicaoCanoVertical);
 		textoPontuacao.draw(batch, String.valueOf(pontos), larguraDispositivo/2, alturaDispositivo-100 );
 
+		if (estadoJogo==2) {
+            batch.draw(gameOver, larguraDispositivo / 2-gameOver.getWidth()/2, alturaDispositivo / 2);
+            textoReiniciar.draw(batch, "TOQUE NA TELA PARA REINICIAR",
+                    larguraDispositivo / 2-200, alturaDispositivo / 2-gameOver.getHeight()/2);
+            textoMelhorPountuacao.draw(batch, "SUA MELHOR PONTUAÇÂO É : 0 PONTOS!",
+                    larguraDispositivo / 2-300, alturaDispositivo / 2-gameOver.getHeight()*2);
+        }
+
 		batch.end();
 
 	}
 
 	private void verificarEstadoJogo() {
 
-        posicaoCanoHorizontal -=Gdx.graphics.getDeltaTime()*200;
-        if (posicaoCanoHorizontal <-canoBaixo.getHeight()){
-            posicaoCanoHorizontal =larguraDispositivo;
-            posicaoCanoVertical=random.nextInt(400)-200;
-            passouCano=false;
-        }
-
         boolean toqueTela = Gdx.input.justTouched();
-        if (Gdx.input.justTouched()) {
-            gravidade = -25;
+
+	    if(estadoJogo==0){
+
+            if (Gdx.input.justTouched()) {
+                gravidade = -15;
+                estadoJogo=1;
+            }
+
+        } else if (estadoJogo==1){
+
+            if (Gdx.input.justTouched()) {
+                gravidade = -15;
+            }
+
+            posicaoCanoHorizontal -=Gdx.graphics.getDeltaTime()*200;
+            if (posicaoCanoHorizontal <-canoBaixo.getHeight()){
+                posicaoCanoHorizontal =larguraDispositivo;
+                posicaoCanoVertical=random.nextInt(400)-200;
+                passouCano=false;
+            }
+
+            //Faz ele pular
+            if(posicaoInicialVerticalPassaro>0||toqueTela)
+                posicaoInicialVerticalPassaro=posicaoInicialVerticalPassaro-gravidade;
+
+            gravidade++;
+
+        }else if (estadoJogo==2){
+
+
+
         }
-
-        //Faz ele pular
-        if(posicaoInicialVerticalPassaro>0||toqueTela)
-            posicaoInicialVerticalPassaro=posicaoInicialVerticalPassaro-gravidade;
-
-
-        variacao+=Gdx.graphics.getDeltaTime()*10;
-        if(variacao>3)
-            variacao=0;
-
-        gravidade++;
-
-
-
 
     }
 
