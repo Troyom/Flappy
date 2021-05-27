@@ -2,6 +2,7 @@ package com.flappy.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -10,7 +11,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
-import com.sun.xml.internal.messaging.saaj.soap.GifDataContentHandler;
+import com.badlogic.gdx.audio.Sound;
 
 import java.util.Random;
 
@@ -28,9 +29,11 @@ public class Jogo extends ApplicationAdapter {
 
 	private int gravidade = 0;
 	private int pontos=0;
+	private int pontuacaoMaxima=0;
     private int estadoJogo=0;
 	private float variacao = 0;
 	private float posicaoInicialVerticalPassaro = 0;
+    private float posicaoHorizontalPassaro = 0;
 	private float posicaoCanoHorizontal;
 	private float posicaoCanoVertical;
 	private float espaçoEntreCano;
@@ -38,6 +41,13 @@ public class Jogo extends ApplicationAdapter {
 	BitmapFont textoPontuacao;
     BitmapFont textoReiniciar;
     BitmapFont textoMelhorPountuacao;
+
+    Sound somVoando;
+    Sound somColisao;
+    Sound somPontuacao;
+
+    Preferences preferencias;
+
 
 	private  boolean passouCano=false;
 	private Random random;
@@ -92,6 +102,13 @@ public class Jogo extends ApplicationAdapter {
 		circuloPassaro=new Circle();
 		retanguloCanoCima=new Rectangle();
 		retanguloCanoBaixo=new Rectangle();
+
+		somVoando=Gdx.audio.newSound(Gdx.files.internal("som_asa.wav"));
+		somColisao=Gdx.audio.newSound(Gdx.files.internal("som_batida.wav"));
+		somPontuacao=Gdx.audio.newSound(Gdx.files.internal("som_pontos.wav"));
+
+		preferencias=Gdx.app.getPreferences("FlappyBird");
+		pontuacaoMaxima=preferencias.getInteger("pontuacaoMaxima", 0);
 
 	}
 
@@ -150,6 +167,10 @@ public class Jogo extends ApplicationAdapter {
 
         if (bateuCanoBaixo||bateuCanoCima){
             Gdx.app.log("log","bateu");
+            if (estadoJogo==1){
+                somColisao.play();
+                estadoJogo=2;
+            }
         }
     }
 
@@ -158,6 +179,7 @@ public class Jogo extends ApplicationAdapter {
             if (!passouCano){
                 pontos++;
                 passouCano=true;
+                somPontuacao.play();
             }
         }
         variacao+=Gdx.graphics.getDeltaTime()*10;
@@ -171,7 +193,7 @@ public class Jogo extends ApplicationAdapter {
 		batch.begin();
 
 		batch.draw(fundo, 0, 0, larguraDispositivo,alturaDispositivo);
-		batch.draw(passaro[(int)variacao], 30,posicaoInicialVerticalPassaro);
+		batch.draw(passaro[(int)variacao], 50+ posicaoHorizontalPassaro,posicaoInicialVerticalPassaro);
 		batch.draw(canoBaixo, posicaoCanoHorizontal,
                 alturaDispositivo/2-canoBaixo.getHeight()-espaçoEntreCano/2+posicaoCanoVertical);
 		batch.draw(canoTopo, posicaoCanoHorizontal, alturaDispositivo/2+espaçoEntreCano/2+posicaoCanoVertical);
@@ -181,7 +203,7 @@ public class Jogo extends ApplicationAdapter {
             batch.draw(gameOver, larguraDispositivo / 2-gameOver.getWidth()/2, alturaDispositivo / 2);
             textoReiniciar.draw(batch, "TOQUE NA TELA PARA REINICIAR",
                     larguraDispositivo / 2-200, alturaDispositivo / 2-gameOver.getHeight()/2);
-            textoMelhorPountuacao.draw(batch, "SUA MELHOR PONTUAÇÂO É : 0 PONTOS!",
+            textoMelhorPountuacao.draw(batch, "SUA MELHOR PONTUAÇÂO É : "+ pontuacaoMaxima+ "PONTOS!",
                     larguraDispositivo / 2-300, alturaDispositivo / 2-gameOver.getHeight()*2);
         }
 
@@ -198,12 +220,14 @@ public class Jogo extends ApplicationAdapter {
             if (Gdx.input.justTouched()) {
                 gravidade = -15;
                 estadoJogo=1;
+                somVoando.play();
             }
 
         } else if (estadoJogo==1){
 
             if (Gdx.input.justTouched()) {
                 gravidade = -15;
+                somVoando.play();
             }
 
             posicaoCanoHorizontal -=Gdx.graphics.getDeltaTime()*200;
@@ -221,7 +245,21 @@ public class Jogo extends ApplicationAdapter {
 
         }else if (estadoJogo==2){
 
+	        if (pontos>pontuacaoMaxima){
+	            pontuacaoMaxima=pontos;
+	            preferencias.putInteger("pontuacaoMaxima", pontuacaoMaxima);
+            }
 
+            posicaoHorizontalPassaro-=Gdx.graphics.getDeltaTime()*500;
+
+	        if (toqueTela){
+	            estadoJogo=0;
+	            pontos=0;
+	            gravidade=0;
+	            posicaoHorizontalPassaro =0;
+	            posicaoInicialVerticalPassaro=alturaDispositivo/2;
+	            posicaoCanoHorizontal=larguraDispositivo;
+            }
 
         }
 
