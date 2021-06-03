@@ -16,7 +16,8 @@ import com.badlogic.gdx.audio.Sound;
 import java.util.Random;
 
 public class Jogo extends ApplicationAdapter {
-	private SpriteBatch batch;
+
+    private SpriteBatch batch;
 	private Texture[] passaro;
 	private Texture fundo;
 	private Texture canoTopo;
@@ -55,6 +56,8 @@ public class Jogo extends ApplicationAdapter {
 	private ShapeRenderer shapeRenderer;
 	private Circle circuloPassaro;
 	private Rectangle retanguloCanoCima;
+
+	//
 	private Rectangle retanguloCanoBaixo;
 
 
